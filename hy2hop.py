@@ -19,7 +19,13 @@ SELF = Path('/usr/local/sbin/hcloudlab-hy2hop')
 UNIT = Path('/etc/systemd/system/hcloudlab-hy2hop.service')
 SERVICE = UNIT.name
 TABLE = 'hcloudlab_hy2hop'
-LOCK = Path('/run/lock/hcloudlab-hy2hop.lock')
+# Directly under /run (root:root 0755), not /run/lock (world-writable,
+# 1777 sticky): /run/lock lets any local unprivileged user pre-create a
+# file at this predictable name and hold flock() on it indefinitely,
+# permanently denial-of-servicing every future install/update/status/
+# restore run (including root's) with "已有另一进程正在操作" - /run
+# itself is not world-writable, so only root can place a file here.
+LOCK = Path('/run/hcloudlab-hy2hop.lock')
 
 
 def run(cmd, check=True, input_text=None):
