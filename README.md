@@ -45,8 +45,3 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/hcloudlab/Hysteria2
 - 跨 nftables/UFW/systemd 的自动回滚实现了尽力清理；断电、SIGKILL、外部系统同时修改规则等情况下，不能保证严格事务原子性。
 - 恢复不卸载 nftables 软件包，不修改 3X-UI 数据库。
 
-## GitHub 发布入口
-
-正式仓库：https://github.com/hcloudlab/Hysteria2-Hop
-
-项目包含 `bootstrap.sh`（从 GitHub 获取核心脚本运行）与 `install.sh`（本地仓库直接启动）。不要将本地/容器内的自动化测试 PASS 当作面向真实用户的 Release Gate；其他未覆盖的场景仍需按“验收”一节检查。
