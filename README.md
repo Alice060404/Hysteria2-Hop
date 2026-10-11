@@ -8,6 +8,10 @@
 - UFW 开启时自动添加跳跃范围的 UDP 放行规则；nftables 未安装时从 Ubuntu 软件源自动安装。
 - 本版本不保证与 Docker 或其他自定义 NAT 规则共存；检测到其他 DNAT/redirect 将安全拒绝安装。
 
+## 🎧 图文配置教程
+
+[🎧 3X-UI Hysteria2 端口跳跃配置教程（面板参数、Shadowrocket、脚本命令）](docs/🎧-Hysteria2端口跳跃配置.md)
+
 ## 一键安装
 
 ```bash
@@ -37,7 +41,7 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/hcloudlab/Hysteria2
   - `apt-get install nftables` 在全新安装时不会自动启用/启动 `nftables.service`；
   - `ufw`/`nft -a list ruleset` 的真实输出格式与代码里的字符串匹配、正则解析完全一致；
   - 存在其他 DNAT/redirect 规则时能正确检测并拒绝安装，自身规则不会被误判为冲突。
-- **尚未在 DMIT 真实 VPS、真实 3X-UI、真实 systemd 重启、真实 IPv6 全局地址环境中执行，也没有真实客户端连接验证。** `status PASS` 不是客户端连接成功的证明。
+- **已在 DMIT Ubuntu 24.04 实机验证**：3X-UI Hysteria2 入站、Shadowrocket IPv4 端口跳跃连接、修改 Hop Ports 后执行 `update`、重复 `update` 幂等，以及 VPS 重启后服务与客户端连通性。**尚未完成公网 IPv6 双栈连通性验证。** `status PASS` 仅代表本机配置检查通过。
 - 跨 nftables/UFW/systemd 的自动回滚实现了尽力清理；断电、SIGKILL、外部系统同时修改规则等情况下，不能保证严格事务原子性。
 - 恢复不卸载 nftables 软件包，不修改 3X-UI 数据库。
 
@@ -45,4 +49,4 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/hcloudlab/Hysteria2
 
 正式仓库：https://github.com/hcloudlab/Hysteria2-Hop
 
-项目包含 `bootstrap.sh`（从 GitHub 获取核心脚本运行）与 `install.sh`（本地仓库直接启动）。不要将本地/容器内的自动化测试 PASS 当作面向真实用户的 Release Gate；DMIT 真实环境验收前仍需按"验收"一节逐项人工确认。
+项目包含 `bootstrap.sh`（从 GitHub 获取核心脚本运行）与 `install.sh`（本地仓库直接启动）。不要将本地/容器内的自动化测试 PASS 当作面向真实用户的 Release Gate；其他未覆盖的场景仍需按“验收”一节检查。
