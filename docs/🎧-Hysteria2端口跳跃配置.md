@@ -1,7 +1,6 @@
 # 🎧 3X-UI Hysteria2 端口跳跃配置教程
 
-适用：Ubuntu 24.04、3X-UI、Hysteria2。项目：[Hysteria2-Hop](https://github.com/hcloudlab/Hysteria2-Hop)。
-
+适用：Ubuntu 24.04、3X-UI、Hysteria2。
 端口跳跃需要三件事同时生效，少一件客户端就连不上：
 
 1. 一段"跳跃端口范围"（比如 `20000-30000`）的 UDP 流量，被转发到 Hysteria2 真正监听的那个端口（比如 `443`）。
