@@ -15,6 +15,9 @@
 
 ### 基础配置
 
+![图 1：Hysteria2 基础配置，监听端口不能位于跳跃端口范围内](images/hy2-hop-step-1.png)
+
+
 **注意：监听端口必须位于 Hop Ports 范围之外。** 例如监听端口 `24447` 与跳跃范围 `20000-50000` 重叠，脚本会拒绝安装；改为 `14447` 或其他不在该范围内的未占用端口即可。端口 `443` 只是示例，实际端口以你的 3X-UI 入站为准。
 
 
@@ -25,6 +28,15 @@
 | 监听端口 | `443`（示例；**不能落在跳跃端口范围内**） |
 
 ### 传输配置
+
+**图 2：传输配置（上半部分）**
+
+![图 2：Hysteria2 传输配置与 Salamander 混淆设置](images/hy2-hop-step-2.png)
+
+**图 3：传输配置（UDP Hop 与 QUIC 参数）**
+
+![图 3：Hysteria2 UDP Hop 端口范围及跳跃间隔](images/hy2-hop-step-3.png)
+
 
 传输页面分为上下两部分：图 2 主要是 **UDP Masks / Salamander、QUIC Params、拥塞控制**；图 3 主要是 **UDP Hop、Hop Ports、Hop Interval** 及其余 QUIC 参数。按面板向下滚动即可找到，不是两个不同的配置页面。
 
@@ -68,6 +80,9 @@
 - Disable Path MTU Discovery 的开启状态仅为本次实测设置，不是所有网络环境的强制要求；其他开关先按图示设置，不必额外调整。
 
 ### 安全配置
+
+![图 4：Hysteria2 安全配置，SNI 与面板证书选择](images/hy2-hop-step-4.png)
+
 
 **SNI 可以填写域名，也可以填写 VPS 公网 IP**，但前提是所使用的 TLS 证书能够匹配这个域名或 IP；不是任意填写一个地址都可以。
 
