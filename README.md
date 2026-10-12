@@ -23,6 +23,18 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/hcloudlab/Hysteria2
 
 本地已有完整仓库时，也可以直接在仓库目录执行 `sudo bash install.sh`。
 
+## VPS / ISP 推荐
+
+以下服务可按实际需求选用，**不是使用 Hysteria2-Hop 的必要条件**。
+
+| 名称 | 主要特点 | 链接 |
+| --- | --- | --- |
+| **搬瓦工 VPS — DC9** | **CN2 GIA + CMIN2 + 联通 Premium**，面向中国大陆方向提供多运营商优质线路；当前推荐套餐 **$49.99 / 季度**。 | [购买 DC9](https://bwh81.net/aff.php?aff=82473&a=add&pid=87&billingcycle=quarterly&configoption%5B17%5D=55) |
+| **DMIT** | **CN2 GIA 顶级线路，国内访问速度一流**。 | [访问 DMIT](https://www.dmit.io/aff.php?aff=20932) |
+| **Proxy-Seller ISP** | 静态住宅代理 ISP，价格约 **$3 / 月起**；优惠码 **HCLOUD15**。 | [购买 ISP](https://proxy-seller.com/?partner=8Y51DM71OGR26N) |
+
+> 以上为 Affiliate 推广链接，可能为项目维护者带来佣金。Hysteria2-Hop 只负责 3X-UI Hysteria2 的端口跳跃规则，不提供 VPS、线路或 ISP 出口。价格、套餐和优惠以服务商实际页面为准。
+
 ## 验收
 
 1. 首次安装：检查是否自动安装 nftables，读取 Hop Ports 并生成 IPv4/IPv6 映射，确认 UFW 同时放行了跳跃范围和实际监听端口（`ufw status numbered`）。
