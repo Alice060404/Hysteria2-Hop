@@ -34,17 +34,17 @@ class RulesTests(unittest.TestCase):
   with patch.object(m.shutil,'which',return_value='/usr/sbin/nft'),patch.object(m,'run') as r:
    m.dependency();r.assert_not_called()
  def test_update_noop(self):
-  old={'config':CFG,'families':['ip'],'ufw_owned':[]}
-  with patch.object(m,'read_state',return_value=old),patch.object(m,'choose',return_value=CFG),patch.object(m,'listener'),patch.object(m,'dependency'),patch.object(m,'conflicts'),patch.object(m,'families',return_value=['ip']),patch.object(m,'apply') as a:
-   m.update();a.assert_not_called()
+  old={'config':CFG,'families':['ip'],'ufw_owned':['20000:30000/udp','443/udp']}
+  with patch.object(m,'read_state',return_value=old),patch.object(m,'choose',return_value=CFG),patch.object(m,'listener'),patch.object(m,'dependency'),patch.object(m,'conflicts'),patch.object(m,'families',return_value=['ip']),patch.object(m,'apply') as a,patch.object(m,'ufw_add') as ua,patch.object(m,'write_state') as w:
+   m.update();a.assert_not_called();ua.assert_not_called();w.assert_not_called()
  def test_install_rollback(self):
   with patch.object(m,'choose',return_value=CFG),patch.object(m,'listener'),patch.object(m,'dependency'),patch.object(m,'owned_tables',return_value=[]),patch.object(m,'conflicts'),patch.object(m,'families',return_value=['ip']),patch.object(m,'ufw_add',return_value=True),patch.object(m,'apply',side_effect=RuntimeError('injected')),patch.object(m,'delete_tables') as d,patch.object(m,'ufw_delete') as u,patch.object(m,'clean_service') as c,patch.object(m,'STATE') as s,patch.object(m,'UNIT') as unit:
    s.exists.return_value=False;unit.exists.return_value=False
    with self.assertRaisesRegex(RuntimeError,'injected'):m.install()
-   d.assert_called_once();u.assert_called_once();c.assert_called_once()
+   d.assert_called_once();self.assertEqual(u.call_count,2);c.assert_called_once()
  def test_update_rollback(self):
   old={'config':dict(CFG,start=10000,end=11000),'families':['ip'],'ufw_owned':['10000:11000/udp']}
   with patch.object(m,'read_state',return_value=old),patch.object(m,'choose',return_value=CFG),patch.object(m,'listener'),patch.object(m,'dependency'),patch.object(m,'conflicts'),patch.object(m,'families',return_value=['ip']),patch.object(m,'ufw_add',return_value=True),patch.object(m,'apply',side_effect=[None,None]) as a,patch.object(m,'write_state',side_effect=[RuntimeError('disk full'),None]),patch.object(m,'ufw_delete') as u:
    with self.assertRaisesRegex(RuntimeError,'disk full'):m.update()
-   self.assertEqual(a.call_count,2);u.assert_called_once()
+   self.assertEqual(a.call_count,2);self.assertEqual(u.call_count,2)
 if __name__=='__main__':unittest.main()

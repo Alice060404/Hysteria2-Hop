@@ -174,6 +174,11 @@ def conflicts(cfg):
         raise RuntimeError('检测到其他 NAT 重定向规则，为避免覆盖现有业务已停止（需要人工审查）')
 
 
+def specs(cfg):
+    """UFW specs this tool must own for a config: hop range, then listen port."""
+    return f'{cfg["start"]}:{cfg["end"]}/udp', f'{cfg["port"]}/udp'
+
+
 def ufw_active():
     if not shutil.which('ufw'):
         return False
@@ -254,17 +259,19 @@ def install(ident=None):
         raise RuntimeError('发现没有状态记录的专属 nft 表，拒绝覆盖')
     conflicts(cfg)
     fam = families()
-    spec = f'{cfg["start"]}:{cfg["end"]}/udp'
-    added = False
+    hop_spec, port_spec = specs(cfg)
+    added = []
     try:
-        added = ufw_add(spec)
+        for spec in (hop_spec, port_spec):
+            if ufw_add(spec):
+                added.append(spec)
         apply(cfg, fam)
-        write_state(dict(config=cfg, families=fam, ufw_owned=[spec] if added else []))
+        write_state(dict(config=cfg, families=fam, ufw_owned=added))
         setup_service()
     except BaseException:
         # Best-effort rollback; preserve state if cleanup fails for subsequent recovery.
         errors = []
-        for operation in (delete_tables, lambda: ufw_delete(spec) if added else None, clean_service):
+        for operation in (delete_tables, *[(lambda s=s: ufw_delete(s)) for s in added], clean_service):
             try:
                 operation()
             except Exception as e:
@@ -275,7 +282,7 @@ def install(ident=None):
             print('回滚不完整，请保留状态文件并检查: ' + '; '.join(errors), file=sys.stderr)
         raise
     print(f'安装完成: 入站 {cfg["id"]} UDP {cfg["start"]}-{cfg["end"]} → {cfg["port"]}')
-    print('请更新客户端订阅并实测；云厂商安全组需自行允许跳跃范围 UDP。')
+    print('请更新客户端订阅并实测；云厂商安全组需自行允许跳跃范围及监听端口 UDP。')
 
 
 def update(ident=None):
@@ -287,23 +294,32 @@ def update(ident=None):
     dependency()
     conflicts(cfg)
     fam = families()
-    old_spec = f'{old["config"]["start"]}:{old["config"]["end"]}/udp'
-    new_spec = f'{cfg["start"]}:{cfg["end"]}/udp'
-    if cfg == old['config'] and fam == old['families']:
+    new_hop, new_port = specs(cfg)
+    old_owned = list(old.get('ufw_owned', []))
+    unchanged = cfg == old['config'] and fam == old['families']
+    # Specs this tool owned before that neither new spec needs any more
+    # (covers both a changed range/port and pre-fix state missing the port spec).
+    stale = [s for s in old_owned if s not in (new_hop, new_port)]
+    added = []
+    try:
+        for spec in (new_hop, new_port):
+            if spec not in old_owned and ufw_add(spec):
+                added.append(spec)
+    except BaseException:
+        for spec in added:
+            ufw_delete(spec)
+        raise
+    if unchanged and not added and not stale:
         print('配置无变化')
         return
-    new_added = False
+    owned = list(dict.fromkeys([s for s in old_owned if s in (new_hop, new_port)] + added))
     replaced = False
     try:
-        if new_spec != old_spec:
-            new_added = ufw_add(new_spec)
-        apply(cfg, fam)
-        replaced = True
-        owned = [x for x in old.get('ufw_owned', []) if x != old_spec or x == new_spec]
-        if new_added:
-            owned.append(new_spec)
-        # Keep old owned spec in state until its deletion is complete.
-        transitional = dict(config=cfg, families=fam, ufw_owned=list(dict.fromkeys(owned + ([old_spec] if old_spec in old.get('ufw_owned', []) else []))))
+        if not unchanged:
+            apply(cfg, fam)
+            replaced = True
+        # Keep stale specs in state until their deletion below completes.
+        transitional = dict(old, config=cfg, families=fam, ufw_owned=list(dict.fromkeys(owned + stale)))
         write_state(transitional)
     except BaseException:
         if replaced:
@@ -312,14 +328,15 @@ def update(ident=None):
             except Exception as e:
                 print(f'CRITICAL: nft 回滚失败: {e}', file=sys.stderr)
                 raise
-        if new_added:
-            ufw_delete(new_spec)
+        for spec in added:
+            ufw_delete(spec)
         write_state(old)
         raise
-    if old_spec != new_spec and old_spec in old.get('ufw_owned', []):
-        # If deletion fails, state still records old ownership for safe retry.
-        ufw_delete(old_spec)
-        transitional['ufw_owned'].remove(old_spec)
+    for spec in stale:
+        # If deletion fails, state still records stale ownership for safe retry.
+        ufw_delete(spec)
+    if stale:
+        transitional['ufw_owned'] = owned
         write_state(transitional)
     print('更新完成:', cfg)
 
@@ -369,9 +386,11 @@ def status():
     if run(['systemctl', 'is-enabled', SERVICE], False).stdout.strip() != 'enabled':
         errors.append('systemd 持久化服务未启用')
     if ufw_active():
-        spec = f'{cfg["start"]}:{cfg["end"]}/udp'
-        if not ufw_has(spec):
+        hop_spec, port_spec = specs(cfg)
+        if not ufw_has(hop_spec):
             errors.append('UFW 未显示跳跃端口范围放行规则')
+        if not ufw_has(port_spec):
+            errors.append('UFW 未显示监听端口放行规则')
     print('配置:', cfg)
     print('STATUS:', 'PASS' if not errors else 'FAIL')
     for error in errors:
