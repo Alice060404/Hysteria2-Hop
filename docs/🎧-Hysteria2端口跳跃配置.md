@@ -81,7 +81,7 @@
 
 ### 安全配置
 
-![图 4：Hysteria2 安全配置，SNI 与面板证书选择](images/Dark UI Security Configuration Panel.png)
+![图 4：Hysteria2 安全配置，SNI 与面板证书选择](Dark%20UI%20Security%20Configuration%20Panel.png)
 
 
 **SNI 可以填写域名，也可以填写 VPS 公网 IP**，但前提是所使用的 TLS 证书能够匹配这个域名或 IP；不是任意填写一个地址都可以。
