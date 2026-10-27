@@ -1,6 +1,6 @@
 # 🎧 3X-UI Hysteria2 端口跳跃配置教程
 
-适用：Ubuntu 24.04、3X-UI、Hysteria2。
+适用：Ubuntu 20.04 及更新版本（包括 Ubuntu 22.04.5 LTS、24.04；需 systemd 和 Python 3.8+）、3X-UI、Hysteria2。各版本验证范围见 [README](../README.md#内部验证范围)。
 端口跳跃需要三件事同时生效，少一件客户端就连不上：
 
 1. 一段"跳跃端口范围"（比如 `20000-30000`）的 UDP 流量，被转发到 Hysteria2 真正监听的那个端口（比如 `443`）。

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HCloudLab HY2 Hop: Ubuntu 24.04, read-only 3X-UI, dedicated nft NAT."""
+"""HCloudLab HY2 Hop: Ubuntu 20.04+, read-only 3X-UI, dedicated nft NAT."""
 import argparse
 import fcntl
 import json
@@ -40,9 +40,20 @@ def prerequisites():
         raise RuntimeError('需要 root 权限')
     if not Path('/run/systemd/system').exists():
         raise RuntimeError('需要 systemd')
-    text = Path('/etc/os-release').read_text()
-    if not re.search(r'^ID=ubuntu$', text, re.M) or not re.search(r'^VERSION_ID="?24\.04"?$', text, re.M):
-        raise RuntimeError('V1 仅支持 Ubuntu 24.04')
+    # Parse data only: never source os-release as shell code. Do not use
+    # platform.freedesktop_os_release(), which requires Python 3.10 (20.04
+    # ships Python 3.8). Point releases normally retain VERSION_ID="22.04".
+    release = {}
+    for line in Path('/etc/os-release').read_text().splitlines():
+        key, sep, value = line.partition('=')
+        if sep and key.strip() in ('ID', 'VERSION_ID'):
+            release[key.strip()] = value.strip().strip('\"\'')
+    version = re.fullmatch(r'(\d{2})\.(\d{2})(?:\.\d+)?', release.get('VERSION_ID', ''))
+    if (release.get('ID') != 'ubuntu' or version is None
+            or tuple(map(int, version.group(1, 2))) < (20, 4)):
+        raise RuntimeError('需要 Ubuntu 20.04 或更新版本（包括 Ubuntu 22.04.5 LTS）')
+    if sys.version_info < (3, 8):
+        raise RuntimeError('需要 Python 3.8 或更新版本，请使用 Ubuntu 自带的 python3')
     for command in ('systemctl', 'ss', 'ip', 'apt-get'):
         if not shutil.which(command):
             raise RuntimeError(f'缺少系统命令 {command}')

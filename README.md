@@ -1,13 +1,15 @@
-# HCloudLab · 3X-UI Hysteria2 端口跳跃  V1 — Ubuntu 24.04
+# HCloudLab · 3X-UI Hysteria2 端口跳跃  V1 — Ubuntu 20.04+
 
 ## 适用范围
 
 - 3X-UI 面板中的 Hysteria2 入站：数据库 `protocol=hysteria`
 - 在面板填写 **Hop Ports**，例如 `20000-30000`；脚本只读数据库，不修改 x-ui.db。
-- 只支持 Ubuntu 24.04 + systemd；IPv4，存在全局 IPv6 地址时也创建 IPv6 规则。
+- 兼容目标为 Ubuntu 20.04 及更新版本 + systemd，包括 **Ubuntu 22.04.5 LTS**、22.04 系列和 24.04 系列；需要 Python 3.8+（这些版本自带的 Python 3 即可）。IPv4，存在全局 IPv6 地址时也创建 IPv6 规则。
 - UFW 开启时自动添加跳跃范围 **和 Hysteria2 实际监听端口** 的 UDP 放行规则；nftables 未安装时从 Ubuntu 软件源自动安装。
   - 这里说的是服务器自身的 UFW，不是 DMIT/其他云厂商控制台里的"安全组"。安全组仍需自己在面板放行跳跃范围和监听端口。
 - 本版本不保证与 Docker 或其他自定义 NAT 规则共存；检测到其他 DNAT/redirect 将安全拒绝安装。
+
+Ubuntu 的点版本通常沿用系列版本号：例如 Ubuntu 22.04.5 LTS 的 `/etc/os-release` 中 `VERSION_ID="22.04"`，脚本同时接受 `22.04` 和 `22.04.5`。版本检查采用最低版本限制，后续 Ubuntu 版本仍须满足 systemd、系统命令及 nftables 的运行要求；不代表所有版本均已完成实机验证。非 Ubuntu 系统仍会拒绝运行。
 
 ## 🎧 图文配置教程
 
@@ -48,7 +50,8 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/hcloudlab/Hysteria2
 
 ## 内部验证范围
 
-- Python 语法检查与 31 项 mock/SQLite 自动化测试通过（新增跳跃范围 + 监听端口双 UFW 规则的安装/更新/恢复/状态检查/旧版本升级/失败回滚用例）。
+- Python 语法检查与 42 项 mock/SQLite 自动化测试通过：保留原有 31 项功能回归测试，新增 11 项兼容性测试，覆盖 Ubuntu 22.04.5 LTS 的真实版本字段格式、其他版本、发行版拒绝、Python 最低版本及 root/systemd/系统命令要求。
+- 本次兼容性修改在 Python 3.10 和 3.12 下均通过全部 42 项测试。Ubuntu 22.04 默认使用 [Python 3.10](https://documentation.ubuntu.com/release-notes/22.04/)，Ubuntu 20.04 默认使用 [Python 3.8](https://documentation.ubuntu.com/release-notes/20.04/)；本次未运行真实 Python 3.8，也未在 Ubuntu 20.04/22.04.5 实机执行防火墙、重启及客户端连通性验收。新增兼容性用例使用 mock，不能替代下列实机验收。
 - 在隔离的 Ubuntu 24.04 容器中，用真实 `ss`/`nft`/`ufw`/`apt-get` 命令（非 mock）端到端跑通了完整的
   `install → status → update ×3（确认幂等、规则不重复）→ restore` 流程，并单独确认：
   - `apt-get install nftables` 在全新安装时不会自动启用/启动 `nftables.service`；
